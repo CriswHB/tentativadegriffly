@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sugestões e Feedback - DB Ativa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        :root {
+          --color-primary-purple: #5E35B1;
+          --color-dark-bg: #1f0b38;
+          --color-glow-light: #9C27B0;
+          --color-accent-pink: #d15ac7;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-dark-bg);
+            background-image:
+                radial-gradient(circle at 50% 15%, rgba(130, 80, 250, 0.45) 0%, transparent 40%),
+                radial-gradient(circle at 80% 85%, rgba(0, 200, 255, 0.15) 0%, transparent 50%);
+            background-attachment: fixed;
+            color: #d1d5db;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        .main-wrapper { width: 100%; max-width: 600px; margin-top: 24px; z-index: 2; }
+        .profilter-container { padding: 24px; background-color: rgba(0, 0, 0, 0.2); border-radius: 16px; margin-bottom: 30px; box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); }
+        
+        .suggestion-highlight-card, .new-suggestion-card, .recent-suggestions-card {
+            background-color: #1e113a;
+            border: 1px solid #3c1e6e;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .suggestions-main-title { display: flex; align-items: center; gap: 12px; font-size: 24px; font-weight: 600; margin-bottom: 24px; color: #d8b4fe; }
+        .suggestions-main-title img { width: 28px; height: 28px; }
+
+        textarea {
+            width: 100%; height: 100px; background-color: #120e1d; border: 1px solid #3c1e6e;
+            border-radius: 8px; padding: 12px; color: #f3f4f6; outline: none; transition: border-color 0.2s;
+        }
+        textarea:focus { border-color: #a855f7; }
+
+        .submit-suggestion-button {
+            background-color: var(--color-accent-pink); color: white; padding: 10px 20px;
+            border-radius: 8px; font-weight: 500; display: flex; align-items: center; gap: 8px;
+            transition: all 0.3s; box-shadow: 0 4px 10px rgba(209, 90, 199, 0.4);
+        }
+        .submit-suggestion-button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .suggestion-item { display: flex; gap: 16px; padding: 20px 0; border-top: 1px solid #3c1e6e; position: relative; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .author-name { font-weight: 600; color: #d8b4fe; }
+        .suggestion-timestamp { font-size: 11px; color: #9ca3af; }
+        
+        .delete-btn { position: absolute; top: 20px; right: 0; color: #ef4444; cursor: pointer; font-size: 18px; opacity: 0.5; }
+        .delete-btn:hover { opacity: 1; }
+    </style>
+</head>
+<body>
+    
+    <div class="main-wrapper">
+        <div class="profilter-container">
+            <h1 class="suggestions-main-title">
+                <img src="https://i.imgur.com/fiLPZQf.png" alt="Ícone"> Sugestões e Feedback
+            </h1>
+
+            <div class="suggestion-highlight-card flex items-center gap-4">
+                <div class="bg-purple-600 p-3 rounded-full">
+                    <img src="https://i.imgur.com/ETvJQwO.png" alt="Estrela" class="w-6">
+                </div>
+                <div>
+                    <p class="font-semibold text-white">Base de Dados Local Ativa</p>
+                    <p class="text-sm text-gray-400">As suas sugestões agora são salvas permanentemente neste navegador.</p>
+                </div>
+            </div>
+
+            <div class="new-suggestion-card">
+                <h2 class="text-purple-300 font-semibold mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined">edit</span> Enviar Nova Sugestão
+                </h2>
+                <textarea id="suggestion-input" placeholder="O que podemos melhorar no Profilter?"></textarea>
+                <div class="flex justify-end mt-4">
+                    <button id="send-btn" class="submit-suggestion-button" disabled onclick="addSuggestion()">
+                        Enviar <span class="material-symbols-outlined">send</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="recent-suggestions-card">
+                <h2 class="text-purple-300 font-semibold mb-6 flex items-center gap-2">
+                    <span class="material-symbols-outlined">history</span> Sugestões Recentes
+                </h2>
+                <div id="suggestions-container"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const input = document.getElementById('suggestion-input');
+        const btn = document.getElementById('send-btn');
+        const container = document.getElementById('suggestions-container');
+
+        // Configuração do Usuário
+        const USER = {
+            name: 'Admin User',
+            avatar: 'https://www.habbo.com.br/habbo-imaging/avatarimage?img_format=png&user=Crisw&direction=2&head_direction=2&size=m&gesture=sml'
+        };
+
+        // Carregar da "Base de Dados" (LocalStorage) 
+        let db = JSON.parse(localStorage.getItem('suggestionsDB')) || [
+            { id: 1, author: "Roxo Dev", text: "Sugiro adicionar um tema escuro!", time: "01/02/2024", avatar: "https://www.habbo.com.br/habbo-imaging/avatarimage?img_format=png&user=Roxo&size=s" }
+        ];
+
+        function saveAndRender() {
+            localStorage.setItem('suggestionsDB', JSON.stringify(db)); [cite: 10]
+            render();
+        }
+
+        function render() {
+            container.innerHTML = db.length ? '' : '<p class="text-center text-gray-500">Nenhuma sugestão ainda.</p>';
+            db.forEach(item => {
+                const html = `
+                    <div class="suggestion-item">
+                        <img src="${item.avatar}" class="user-avatar">
+                        <div class="flex-1">
+                            <div class="flex justify-between items-center">
+                                <span class="author-name">${item.author}</span>
+                                <span class="suggestion-timestamp">${item.time}</span>
+                            </div>
+                            <p class="text-sm mt-1 text-gray-300">${item.text}</p>
+                        </div>
+                        <span class="material-symbols-outlined delete-btn" onclick="remove(${item.id})">delete</span>
+                    </div>
+                `;
+                container.insertAdjacentHTML('afterbegin', html);
+            });
+        }
+
+        function addSuggestion() {
+            const text = input.value.trim();
+            if (!text) return;
+
+            const newItem = {
+                id: Date.now(),
+                author: USER.name,
+                avatar: USER.avatar,
+                text: text,
+                time: new Date().toLocaleDateString('pt-BR')
+            };
+
+            db.push(newItem);
+            input.value = '';
+            btn.disabled = true;
+            saveAndRender(); [cite: 10]
+        }
+
+        function remove(id) {
+            db = db.filter(item => item.id !== id);
+            saveAndRender(); [cite: 10]
+        }
+
+        input.addEventListener('input', () => {
+            btn.disabled = input.value.trim().length === 0;
+        });
+
+        // Inicialização
+        render();
+    </script>
+</body>
+</html>

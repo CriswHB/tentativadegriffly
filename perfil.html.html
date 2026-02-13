@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil do Usuário - DB Ativa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117;
+            background-image: radial-gradient(at 0% 0%, #1e113a 0%, transparent 50%),
+                              radial-gradient(at 100% 100%, #151a23 0%, transparent 50%);
+            color: #d1d5db;
+            min-height: 100vh;
+        }
+
+        .profile-page-container { display: flex; gap: 24px; padding: 24px; max-width: 1400px; margin: 0 auto; align-items: flex-start; }
+        @media (max-width: 992px) { .profile-page-container { flex-direction: column; } }
+
+        .profile-sidebar { width: 320px; flex-shrink: 0; }
+        @media (max-width: 992px) { .profile-sidebar { width: 100%; } }
+
+        .profile-card, .profile-widget {
+            background-color: #1e113a;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #3c1e6e;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .profile-avatar-wrapper { position: relative; width: 100px; height: 100px; margin: 0 auto 16px; }
+        .profile-avatar-img { width: 100%; height: 100%; border-radius: 50%; border: 4px solid #1e113a; object-fit: cover; }
+        .profile-avatar-badge { position: absolute; bottom: 0; right: 0; background-color: #a855f7; color: white; min-width: 28px; height: 28px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 14px; font-weight: bold; border: 3px solid #1e113a; }
+        
+        .profile-username { font-size: 24px; font-weight: 600; color: #d8b4fe; text-align: center; }
+        .profile-bio { background-color: #1e113a; padding: 12px; border-radius: 8px; font-size: 14px; border: 1px solid #3c1e6e; margin-top: 10px; }
+        
+        .emblems-horizontal, .trophies-horizontal { display: flex; overflow-x: auto; gap: 16px; padding: 8px 0; }
+        .emblem-horizontal-item, .trophy-horizontal-item { flex: 0 0 auto; width: 80px; text-align: center; }
+        .emblem-horizontal-item img, .trophy-horizontal-item img { width: 50px; height: 50px; border: 2px solid #6b21a8; border-radius: 8px; margin: 0 auto 8px; padding: 5px; }
+
+        .profile-nav { display: flex; gap: 8px; border-bottom: 2px solid #3c1e6e; overflow-x: auto; margin-bottom: 32px; }
+        .profile-nav-tab { padding: 10px 16px; color: #9ca3af; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+        .active-tab { color: #d8b4fe; border-bottom-color: #a855f7; font-weight: 600; }
+        
+        .activity-item { display: none; }
+        .post-card { background-color: #1a1526; border-radius: 12px; padding: 20px; border-left: 4px solid #d8b4fe; }
+        
+        /* Modal Style */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    </style>
+</head>
+<body>
+
+    <div class="profile-page-container">
+        <div class="profile-sidebar">
+            <div class="profile-card">
+                <div class="profile-avatar-wrapper">
+                    <img src="https://www.habbo.com.br/habbo-imaging/avatarimage?img_format=png&user=Crisw&direction=3&head_direction=3&size=m&gesture=sml&action=std" class="profile-avatar-img">
+                    <div class="profile-avatar-badge" id="level-display">99</div>
+                </div>
+                <h2 class="profile-username">@MinhaContaHabbo</h2>
+                <div class="profile-bio" id="bio-text">Carregando biografia...</div>
+                <button onclick="editBio()" class="text-purple-500 text-xs mt-2 w-full hover:underline">Editar Biografia</button>
+            </div>
+
+            <div class="profile-widget">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="flex items-center gap-2 text-purple-300 font-bold">
+                        <img src="https://i.imgur.com/Ij1iHZN.png" class="w-5 h-5"> Troféus
+                    </h3>
+                    <span id="trophy-count" class="bg-purple-900 text-purple-300 text-xs px-2 py-1 rounded-full">0</span>
+                </div>
+                <div class="trophies-horizontal" id="trophy-list"></div>
+            </div>
+
+            <div class="profile-widget">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="flex items-center gap-2 text-purple-300 font-bold">
+                        <img src="https://i.imgur.com/IMocr3j.png" class="w-5 h-5"> Emblemas
+                    </h3>
+                </div>
+                <div class="emblems-horizontal" id="emblem-list"></div>
+            </div>
+        </div>
+
+        <div class="profile-main-content flex-grow">
+            <div class="profile-nav">
+                <div class="profile-nav-tab active-tab" onclick="showActivity('postagens')" data-target="postagens">Postagens</div>
+                <div class="profile-nav-tab" onclick="showActivity('fotos')" data-target="fotos">Fotos</div>
+                <div class="profile-nav-tab" onclick="showActivity('musicas')" data-target="musicas">Músicas</div>
+            </div>
+
+            <div id="postagens" class="activity-item" style="display: block;">
+                <div class="post-card">
+                    <p class="text-xs text-gray-500 mb-2">Publicado recentemente</p>
+                    <p class="text-gray-200">Bem-vindo ao meu perfil atualizado com Base de Dados!</p>
+                </div>
+            </div>
+
+            <div id="fotos" class="activity-item">
+                <div class="grid grid-cols-3 gap-4" id="photo-grid">
+                    <div class="bg-gray-800 aspect-square rounded-lg flex items-center justify-center text-xs">Galeria Vazia</div>
+                </div>
+            </div>
+
+            <div id="musicas" class="activity-item">
+                <div class="bg-purple-900/20 p-8 rounded-xl border border-dashed border-purple-500 text-center">
+                    Nenhuma música favoritada ainda.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="bioModal" class="modal-overlay">
+        <div class="bg-gray-900 p-6 rounded-xl border border-purple-500 w-80">
+            <h3 class="text-white font-bold mb-4">Editar Bio</h3>
+            <textarea id="bioInput" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-700 h-24 text-sm"></textarea>
+            <div class="flex justify-end gap-2 mt-4">
+                <button onclick="closeBioModal()" class="text-gray-400 text-sm">Cancelar</button>
+                <button onclick="saveBio()" class="bg-purple-600 px-4 py-1 rounded text-white text-sm">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- BASE DE DADOS (LOCALSTORAGE) ---
+        const DEFAULT_DATA = {
+            bio: "Criando interfaces elegantes e responsivas com um toque de magia roxa. [cite: 265]",
+            level: 99,
+            trophies: [
+                { name: "Mestre Docs", img: "https://placehold.co/50x50/10b981/1e113a?text=T2" },
+                { name: "Bug Hunter", img: "https://placehold.co/50x50/8b5cf6/1e113a?text=T3" }
+            ],
+            emblems: [
+                { name: "Foco em UX", img: "https://placehold.co/50x50/38a169/ffffff?text=E1" },
+                { name: "Expert Grid", img: "https://placehold.co/50x50/e53e3e/ffffff?text=E2" }
+            ]
+        };
+
+        let userData = JSON.parse(localStorage.getItem('userProfileDB')) || DEFAULT_DATA;
+
+        function saveDB() {
+            localStorage.setItem('userProfileDB', JSON.stringify(userData));
+            renderProfile();
+        }
+
+        // --- RENDERIZAÇÃO ---
+        function renderProfile() {
+            document.getElementById('bio-text').textContent = userData.bio;
+            document.getElementById('level-display').textContent = userData.level;
+            
+            // Render Trophies
+            const trophyList = document.getElementById('trophy-list');
+            trophyList.innerHTML = userData.trophies.map(t => `
+                <div class="trophy-horizontal-item">
+                    <img src="${t.img}" alt="${t.name}">
+                    <p class="text-[10px]">${t.name}</p>
+                </div>
+            `).join('');
+            document.getElementById('trophy-count').textContent = `${userData.trophies.length} Conquistas`;
+
+            // Render Emblems
+            const emblemList = document.getElementById('emblem-list');
+            emblemList.innerHTML = userData.emblems.map(e => `
+                <div class="emblem-horizontal-item">
+                    <img src="${e.img}" alt="${e.name}">
+                    <p class="text-[10px]">${e.name}</p>
+                </div>
+            `).join('');
+        }
+
+        // --- FUNÇÕES DE INTERAÇÃO ---
+        function editBio() {
+            document.getElementById('bioInput').value = userData.bio;
+            document.getElementById('bioModal').style.display = 'flex';
+        }
+
+        function closeBioModal() {
+            document.getElementById('bioModal').style.display = 'none';
+        }
+
+        function saveBio() {
+            userData.bio = document.getElementById('bioInput').value;
+            saveDB();
+            closeBioModal();
+        }
+
+        function showActivity(id) {
+            document.querySelectorAll('.activity-item').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.profile-nav-tab').forEach(el => el.classList.remove('active-tab'));
+            document.getElementById(id).style.display = 'block';
+            document.querySelector(`[data-target="${id}"]`).classList.add('active-tab');
+        }
+
+        window.onload = renderProfile;
+    </script>
+</body>
+</html>
+

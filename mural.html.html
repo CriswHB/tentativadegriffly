@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mural de Fotos - GRIFFY DB</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    :root {
+      --color-primary-purple: #5E35B1;
+      --color-dark-bg: #0d1117;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--color-dark-bg);
+      background-image: radial-gradient(at 0% 0%, #1e113a 0%, transparent 50%),
+                        radial-gradient(at 100% 100%, #151a23 0%, transparent 50%);
+      color: #d1d5db;
+      min-height: 100vh;
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .photo-card {
+      background: #1e113a;
+      border: 1px solid #3c1e6e;
+      border-radius: 16px;
+      overflow: hidden;
+      transition: transform 0.3s ease;
+      position: relative;
+    }
+
+    .photo-card:hover {
+      transform: translateY(-5px);
+      border-color: #a855f7;
+    }
+
+    .delete-photo {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(239, 68, 68, 0.8);
+      color: white;
+      padding: 5px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+    }
+
+    .photo-card:hover .delete-photo {
+      display: block;
+    }
+
+    .modal-overlay {
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(5px);
+    }
+  </style>
+</head>
+<body class="p-6">
+
+  <div class="max-w-6xl mx-auto">
+    <header class="flex justify-between items-center mb-10 border-b border-purple-900 pb-6">
+      <div>
+        <h1 class="text-3xl font-black text-white">MURAL DE FOTOS</h1>
+        <p class="text-purple-400 text-sm">Base de Dados de Memórias Ativa</p>
+      </div>
+      <button onclick="showModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full font-bold transition flex items-center gap-2">
+        <span class="material-symbols-outlined">add_a_photo</span>
+        Publicar Foto
+      </button>
+    </header>
+
+    <div id="photo-gallery" class="photo-grid">
+      </div>
+  </div>
+
+  <div id="photoModal" class="modal-overlay fixed inset-0 hidden items-center justify-center z-50">
+    <div class="bg-gray-900 border border-purple-500 p-8 rounded-2xl w-full max-w-md">
+      <h2 class="text-xl font-bold text-white mb-6">Nova Publicação</h2>
+      <form id="photoForm" onsubmit="event.preventDefault(); addPhoto();">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm mb-1 text-gray-400">URL da Imagem</label>
+            <input type="url" id="p-url" required class="w-full bg-gray-800 border border-gray-700 p-2 rounded text-white outline-none focus:border-purple-500" placeholder="https://exemplo.com/foto.jpg">
+          </div>
+          <div>
+            <label class="block text-sm mb-1 text-gray-400">Legenda / Descrição</label>
+            <textarea id="p-desc" class="w-full bg-gray-800 border border-gray-700 p-2 rounded text-white outline-none h-24 focus:border-purple-500" placeholder="Escreve algo sobre esta foto..."></textarea>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+          <button type="button" onclick="hideModal()" class="text-gray-400 hover:text-white">Cancelar</button>
+          <button type="submit" class="bg-purple-600 px-6 py-2 rounded-lg font-bold text-white">Publicar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // --- LÓGICA DA BASE DE DADOS (LOCALSTORAGE) ---
+
+    function getDB() {
+      const data = localStorage.getItem('muralFotosDB');
+      return data ? JSON.parse(data) : [
+        { id: 1, url: 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&w=500', desc: 'Explosão de cores e tecnologia.' },
+        { id: 2, url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=500', desc: 'Setup retro-futurista pronto.' }
+      ];
+    }
+
+    let photos = getDB();
+
+    function saveDB() {
+      localStorage.setItem('muralFotosDB', JSON.stringify(photos));
+      renderGallery();
+    }
+
+    function addPhoto() {
+      const url = document.getElementById('p-url').value;
+      const desc = document.getElementById('p-desc').value;
+
+      const newPhoto = {
+        id: Date.now(),
+        url: url,
+        desc: desc
+      };
+
+      photos.unshift(newPhoto);
+      saveDB();
+      hideModal();
+      document.getElementById('photoForm').reset();
+    }
+
+    function deletePhoto(id) {
+      if(confirm("Deseja apagar esta foto permanentemente?")) {
+        photos = photos.filter(p => p.id !== id);
+        saveDB();
+      }
+    }
+
+    function renderGallery() {
+      const gallery = document.getElementById('photo-gallery');
+      
+      if (photos.length === 0) {
+        gallery.innerHTML = `<div class="col-span-full text-center py-20 text-gray-600 italic">O mural está vazio. Adiciona a primeira foto!</div>`;
+        return;
+      }
+
+      gallery.innerHTML = photos.map(p => `
+        <div class="photo-card">
+          <span class="material-symbols-outlined delete-photo" onclick="deletePhoto(${p.id})">delete</span>
+          <img src="${p.url}" class="w-full h-48 object-cover border-b border-purple-900/50" onerror="this.src='https://placehold.co/400x300?text=Erro+ao+Carregar'">
+          <div class="p-4">
+            <p class="text-sm text-gray-300 line-clamp-2">${p.desc || 'Sem descrição.'}</p>
+            <div class="mt-3 flex justify-between items-center">
+              <span class="text-[10px] text-purple-500 font-bold uppercase">Publicado</span>
+              <button class="text-gray-500 hover:text-red-500 transition">
+                <span class="material-symbols-outlined text-sm">favorite</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // --- FUNÇÕES DE INTERFACE ---
+    function showModal() {
+      document.getElementById('photoModal').classList.replace('hidden', 'flex');
+    }
+
+    function hideModal() {
+      document.getElementById('photoModal').classList.replace('flex', 'hidden');
+    }
+
+    // Inicialização
+    window.onload = renderGallery;
+  </script>
+</body>
+</html>

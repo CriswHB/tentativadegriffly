@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coleção de Emblemas - DB Ativa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117;
+            background-image: radial-gradient(at 0% 0%, #1e113a 0%, transparent 50%),
+                              radial-gradient(at 100% 100%, #151a23 0%, transparent 50%);
+        }
+       
+        @keyframes glowing-border {
+            0% { box-shadow: 0 0 5px #a855f7, 0 0 10px rgba(192, 132, 252, 0.4); }
+            50% { box-shadow: 0 0 10px #a855f7, 0 0 20px rgba(192, 132, 252, 0.8); }
+            100% { box-shadow: 0 0 5px #a855f7, 0 0 10px rgba(192, 132, 252, 0.4); }
+        }
+
+        .collected-badge-glow {
+            border: 1px solid #c084fc;
+            animation: glowing-border 3s infinite alternate;
+        }
+
+        .badge-card {
+            transition: transform 0.3s, box-shadow 0.3s, opacity 0.3s;
+        }
+        .badge-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(168, 85, 247, 0.6);
+        }
+       
+        .icon-shadow {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 50;
+        }
+
+        .modal-content {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 flex flex-col items-center">
+
+    <div class="w-full max-w-4xl space-y-10 z-10">
+        <header class="flex flex-col sm:flex-row justify-between items-center pb-6 border-b-2 border-purple-800">
+            <h1 class="text-4xl font-extrabold text-white mb-4 sm:mb-0 tracking-wider">
+                Coleção de Emblemas
+            </h1>
+           
+            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+                <button onclick="openModal('newBadgeModal')" class="w-full sm:w-auto px-6 py-3 rounded-full font-bold transition duration-300 ease-in-out bg-purple-600 hover:bg-purple-700 text-white shadow-xl shadow-purple-500/50 uppercase">
+                    Novos Emblemas
+                </button>
+
+                <button onclick="openModal('manageBadgesModal')" class="w-full sm:w-auto px-6 py-3 rounded-full font-bold transition duration-300 ease-in-out bg-purple-600 hover:bg-purple-700 text-white shadow-xl shadow-purple-500/50 uppercase">
+                    Gerenciar Emblemas
+                </button>
+            </div>
+        </header>
+
+        <section class="space-y-4">
+            <h2 class="text-2xl font-bold text-purple-400">Resumo de Conquistas</h2>
+            <div class="relative p-6 bg-gray-950 rounded-2xl border-2 border-purple-700 shadow-2xl shadow-purple-900/50 overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-purple-900/20 to-gray-900/10 opacity-70"></div>
+                <div class="relative z-10">
+                    <p class="text-lg font-semibold text-purple-300 uppercase tracking-widest mb-3">Progresso na Coleção</p>
+                    <p class="text-5xl font-extrabold text-white">
+                        <span id="collected-count">0</span>
+                    </p>
+                    <p class="text-sm text-purple-400 mt-1">Emblemas Coletados</p>
+                    <div class="mt-5 w-full bg-gray-700 rounded-full h-3">
+                        <div id="progress-bar" class="bg-purple-500 h-3 rounded-full transition-all duration-700 ease-out" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-6">
+            <h3 id="gallery-title" class="text-2xl font-semibold text-gray-300">Emblemas Coletados (0)</h3>
+            <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-6" id="badge-gallery-container"></div>
+        </section>
+    </div>
+
+    <div id="passwordModal" class="modal-overlay fixed inset-0 hidden items-center justify-center">
+        <div class="modal-content bg-gray-900 border border-purple-600 w-11/12 max-w-sm p-6 rounded-2xl shadow-2xl shadow-purple-500/30">
+            <div class="flex justify-between items-center border-b pb-3 mb-4 border-gray-700">
+                <h3 id="passwordModalTitle" class="text-xl font-bold text-white">Acesso Necessário</h3>
+                <button onclick="closeModal('passwordModal')" class="text-gray-400 hover:text-white">✕</button>
+            </div>
+            <form class="space-y-4" onsubmit="event.preventDefault(); checkPassword();">
+                <input type="password" id="passwordInput" required class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white" placeholder="Senha de Admin">
+                <button type="submit" class="w-full px-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold uppercase">Acessar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="manageBadgesModal" class="modal-overlay fixed inset-0 hidden items-center justify-center">
+        <div class="modal-content bg-gray-900 border border-purple-600 w-11/12 max-w-3xl p-6 rounded-2xl shadow-2xl shadow-purple-500/30">
+            <div class="flex justify-between items-center border-b pb-3 mb-4 border-gray-700">
+                <h3 class="text-2xl font-bold text-white">Gerenciar Emblemas</h3>
+                <button onclick="closeModal('manageBadgesModal')" class="text-gray-400 hover:text-white">✕</button>
+            </div>
+            <div id="modal-badge-list" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
+        </div>
+    </div>
+
+    <div id="newBadgeModal" class="modal-overlay fixed inset-0 hidden items-center justify-center">
+        <div class="modal-content bg-gray-900 border border-purple-600 w-11/12 max-w-md p-6 rounded-2xl shadow-2xl shadow-purple-500/30">
+            <div class="flex justify-between items-center border-b pb-3 mb-4 border-gray-700">
+                <h3 class="text-2xl font-bold text-white">Novo Emblema</h3>
+                <button onclick="closeModal('newBadgeModal')" class="text-gray-400 hover:text-white">✕</button>
+            </div>
+            <form id="newBadgeForm" class="space-y-4" onsubmit="event.preventDefault(); addNewBadge();">
+                <input type="text" id="badgeTitle" required class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white" placeholder="Título">
+                <input type="text" id="badgeImageUrl" required class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white" placeholder="URL ou Emoji">
+                <input type="text" id="badgeRecipient" required class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white" placeholder="Nick">
+                <button type="submit" class="w-full px-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold uppercase">Adicionar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="tempMessageBox" class="fixed bottom-5 right-5 p-4 rounded-lg text-white shadow-xl transition-opacity duration-300 z-50 opacity-0"></div>
+
+    <script>
+        const ACCESS_PASSWORD = 'emblemascdc123'; [cite: 383, 399]
+        let targetModalAfterAuth = null; [cite: 384, 389]
+
+        // --- SISTEMA DE BASE DE DADOS (LOCALSTORAGE) ---
+        function getSavedBadges() {
+            const saved = localStorage.getItem('myBadgesDB'); [cite: 386]
+            if (saved) return JSON.parse(saved); [cite: 386]
+            
+            // Dados iniciais caso não haja nada salvo
+            return [ [cite: 385]
+                { id: 1, name: "Novato Digital", icon: "⭐", type: "emoji", recipient: "N/A" },
+                { id: 2, name: "Explorador", icon: "🧭", type: "emoji", recipient: "N/A" }
+            ];
+        }
+
+        let currentBadges = getSavedBadges(); [cite: 386]
+
+        function saveToDB() {
+            localStorage.setItem('myBadgesDB', JSON.stringify(currentBadges)); [cite: 386]
+        }
+
+        // --- LÓGICA CORE ---
+        function updateAllDisplays() {
+            const count = currentBadges.length; [cite: 349]
+            document.getElementById('collected-count').textContent = count; [cite: 349]
+            document.getElementById('gallery-title').textContent = `Emblemas Coletados (${count})`; [cite: 351, 352]
+            document.getElementById('progress-bar').style.width = `${Math.min((count/15)*100, 100)}%`; [cite: 351]
+            
+            const gallery = document.getElementById('badge-gallery-container'); [cite: 352]
+            gallery.innerHTML = currentBadges.map(b => `
+                <div class="badge-card collected-badge-glow p-4 bg-gray-800 rounded-xl text-center">
+                    ${b.type === 'emoji' ? `<div class="text-4xl icon-shadow">${b.icon}</div>` : `<img src="${b.icon}" class="w-12 h-12 mx-auto rounded-full object-cover">`}
+                    <p class="text-xs font-bold text-white mt-2">${b.name}</p>
+                    <p class="text-[10px] text-green-400">COLETADO</p>
+                </div>
+            `).join(''); [cite: 352, 296]
+        }
+
+        function addNewBadge() {
+            const title = document.getElementById('badgeTitle').value.trim(); [cite: 286]
+            const icon = document.getElementById('badgeImageUrl').value.trim(); [cite: 286]
+            const recipient = document.getElementById('badgeRecipient').value.trim(); [cite: 286]
+
+            if (!title || !icon || !recipient) return; [cite: 287]
+
+            const isUrl = icon.startsWith('http'); [cite: 285, 289]
+            currentBadges.push({
+                id: Date.now(), [cite: 288]
+                name: title, [cite: 291]
+                icon: icon, [cite: 291]
+                type: isUrl ? 'image' : 'emoji', [cite: 289]
+                recipient: recipient [cite: 291]
+            });
+
+            saveToDB(); [cite: 386]
+            closeModal('newBadgeModal'); [cite: 292]
+            updateAllDisplays(); [cite: 292]
+            document.getElementById('newBadgeForm').reset(); [cite: 292]
+        }
+
+        // --- FUNÇÕES DE MODAL ---
+        function openModal(modalId) {
+            if (modalId === 'newBadgeModal' || modalId === 'manageBadgesModal') { [cite: 389]
+                targetModalAfterAuth = modalId; [cite: 384]
+                document.getElementById('passwordModal').classList.replace('hidden', 'flex'); [cite: 393]
+                return;
+            }
+            document.getElementById(modalId).classList.replace('hidden', 'flex'); [cite: 398]
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.replace('flex', 'hidden'); [cite: 400, 283]
+        }
+
+        function checkPassword() {
+            const input = document.getElementById('passwordInput'); [cite: 399]
+            if (input.value === ACCESS_PASSWORD) { [cite: 399]
+                closeModal('passwordModal'); [cite: 400]
+                document.getElementById(targetModalAfterAuth).classList.replace('hidden', 'flex'); [cite: 401, 280]
+                if (targetModalAfterAuth === 'manageBadgesModal') renderBadgesListInModal(); [cite: 402]
+            } else {
+                alert('Senha incorreta!'); [cite: 281]
+            }
+        }
+
+        window.onload = updateAllDisplays;
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bem-vindo ao Griffy - DB Ativa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #0d1117;
+            background-image: radial-gradient(at 0% 0%, #1e113a 0%, transparent 50%),
+                              radial-gradient(at 100% 100%, #151a23 0%, transparent 50%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .glass-container {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            width: 90%;
+            max-width: 1000px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .card {
+            background: rgba(30, 17, 58, 0.4);
+            border: 1px solid #3c1e6e;
+            border-radius: 20px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            background: rgba(94, 53, 177, 0.2);
+            border-color: #a855f7;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+        }
+
+        .btn-enter {
+            background: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%);
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+
+        .btn-enter:hover {
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.6);
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-container">
+        <header class="text-center mb-12">
+            <h1 class="text-5xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">
+                GRIFFY
+            </h1>
+            <p class="text-gray-400 max-w-2xl mx-auto" id="welcome-message">
+                A carregar sistema...
+            </p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12" id="features-grid">
+            </div>
+
+        <div class="text-center">
+            <button class="btn-enter mb-8">Começar Exploração</button>
+            
+            <div class="footer-credits text-xs text-gray-500 font-mono" id="footer-db">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // --- BASE DE DADOS DA LANDING PAGE ---
+        const GRIFFY_DB = {
+            welcomeText: "Conectando educadores, partilhando conhecimento e transformando a experiência social digital.",
+            features: [
+                {
+                    title: "Comunidade",
+                    desc: "Encontre músicas, conecte-se com outros utilizadores e troque ideias valiosas.",
+                    icon: "https://i.imgur.com/oulHEMQ.png"
+                },
+                {
+                    title: "Social",
+                    desc: "Partilhe fotos no Mural, veja memes e publique no PROFItter para interagir.",
+                    icon: "https://i.imgur.com/oNS5fPF.png"
+                },
+                {
+                    title: "Conquistas",
+                    desc: "Desbloqueie troféus exclusivos e acompanhe o seu progresso na plataforma.",
+                    icon: "https://i.imgur.com/OOuOHti.png"
+                }
+            ],
+            credits: {
+                devs: ["Crisw", "Pegas", "Sr. Gabriel"],
+                version: "2.0 - DB Local Ativa"
+            }
+        };
+
+        // --- FUNÇÃO DE RENDERIZAÇÃO ---
+        function updateLandingPage() {
+            // 1. Atualizar Mensagem
+            document.getElementById('welcome-message').textContent = GRIFFY_DB.welcomeText;
+
+            // 2. Gerar Cards de Funcionalidades
+            const grid = document.getElementById('features-grid');
+            grid.innerHTML = GRIFFY_DB.features.map(f => `
+                <div class="card">
+                    <div class="mb-4 flex justify-center">
+                        <img src="${f.icon}" alt="${f.title}" class="w-12 h-12 object-contain">
+                    </div>
+                    <h3 class="text-xl font-bold text-purple-300 mb-2">${f.title}</h3>
+                    <p class="text-sm text-gray-400">${f.desc}</p>
+                </div>
+            `).join('');
+
+            // 3. Atualizar Créditos
+            const footer = document.getElementById('footer-db');
+            footer.innerHTML = `
+                &lt;/&gt; por ${GRIFFY_DB.credits.devs.join(', ')}. <br>
+                <span class="text-purple-700">Versão: ${GRIFFY_DB.credits.version}</span>
+            `;
+        }
+
+        // Iniciar na carga
+        window.onload = updateLandingPage;
+    </script>
+</body>
+</html>
+

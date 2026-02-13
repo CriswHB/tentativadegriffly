@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Troféus e Conquistas - DB Ativa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        :root {
+          --color-primary-purple: #5E35B1;
+          --color-dark-bg: #1f0b38;
+          --color-glow-light: #9C27B0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-dark-bg);
+            background-image: radial-gradient(circle at 50% 15%, rgba(130, 80, 250, 0.45) 0%, transparent 40%);
+            color: #d1d5db;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .trophy-card {
+            background: #1e113a;
+            border: 1px solid #3c1e6e;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .trophy-card:hover {
+            transform: translateY(-5px);
+            border-color: #a855f7;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .management-panel {
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            padding: 24px;
+            margin-top: 50px;
+            border: 1px dashed #3c1e6e;
+        }
+
+        input, textarea {
+            background: #120e1d !important;
+            border: 1px solid #3c1e6e !important;
+            color: white !important;
+            border-radius: 8px;
+            padding: 10px;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .btn-add {
+            background: #7c3aed;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            color: white;
+            transition: background 0.3s;
+        }
+        
+        .btn-add:hover { background: #6d28d9; }
+
+        .modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+            display: none; align-items: center; justify-content: center; z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="max-w-5xl mx-auto">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-extrabold text-white mb-2">Meus Troféus</h1>
+            <p class="text-purple-400 uppercase tracking-widest text-sm font-bold">Base de Dados de Conquistas</p>
+        </header>
+
+        <div id="trophy-gallery" class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+            </div>
+
+        <div class="management-panel">
+            <h2 class="text-xl font-bold mb-6 flex items-center gap-2 text-purple-300">
+                <span class="material-symbols-outlined">settings</span> Gerenciar Base de Dados
+            </h2>
+            
+            <form id="trophy-form" onsubmit="event.preventDefault(); addTrophy();" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input type="text" id="t-name" placeholder="Nome do Troféu" required>
+                <input type="text" id="t-icon" placeholder="URL da Imagem ou Emoji" required>
+                <input type="text" id="t-desc" placeholder="Breve Descrição" required>
+                <button type="submit" class="btn-add md:col-span-3 mt-2">Criar Novo Troféu</button>
+            </form>
+
+            <div class="mt-8 border-t border-purple-900 pt-6">
+                <h3 class="text-sm font-bold text-gray-500 uppercase mb-4">Troféus Atuais</h3>
+                <div id="admin-list" class="space-y-3">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- LOGICA DA BASE DE DADOS ---
+
+        function getDB() {
+            const data = localStorage.getItem('trophiesDB');
+            return data ? JSON.parse(data) : [
+                { id: 1, name: "Primeiros Passos", icon: "https://i.imgur.com/Ij1iHZN.png", desc: "Completou o perfil." },
+                { id: 2, name: "Colecionador", icon: "https://i.imgur.com/ETvJQwO.png", desc: "Ganhou 5 emblemas." }
+            ];
+        }
+
+        let trophies = getDB();
+
+        function saveDB() {
+            localStorage.setItem('trophiesDB', JSON.stringify(trophies));
+            render();
+        }
+
+        function addTrophy() {
+            const name = document.getElementById('t-name').value;
+            const icon = document.getElementById('t-icon').value;
+            const desc = document.getElementById('t-desc').value;
+
+            trophies.push({ id: Date.now(), name, icon, desc });
+            document.getElementById('trophy-form').reset();
+            saveDB();
+        }
+
+        function deleteTrophy(id) {
+            if(confirm("Eliminar este troféu da base de dados?")) {
+                trophies = trophies.filter(t => t.id !== id);
+                saveDB();
+            }
+        }
+
+        function render() {
+            const gallery = document.getElementById('trophy-gallery');
+            const adminList = document.getElementById('admin-list');
+
+            // Render Galeria Pública
+            gallery.innerHTML = trophies.map(t => `
+                <div class="trophy-card">
+                    <img src="${t.icon.startsWith('http') ? t.icon : 'https://placehold.co/60x60?text='+t.icon}" class="w-16 h-16 mx-auto mb-4 object-contain">
+                    <h3 class="font-bold text-white">${t.name}</h3>
+                    <p class="text-xs text-gray-400 mt-2">${t.desc}</p>
+                </div>
+            `).join('');
+
+            // Render Lista de Admin
+            adminList.innerHTML = trophies.map(t => `
+                <div class="flex justify-between items-center bg-black/20 p-3 rounded-lg border border-purple-900/30">
+                    <div class="flex items-center gap-3">
+                        <img src="${t.icon}" class="w-8 h-8 opacity-50">
+                        <span class="text-sm font-medium">${t.name}</span>
+                    </div>
+                    <button onclick="deleteTrophy(${t.id})" class="text-red-500 hover:text-red-400">
+                        <span class="material-symbols-outlined text-sm">delete</span>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        window.onload = render;
+    </script>
+</body>
+</html>
+
